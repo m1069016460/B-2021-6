@@ -1,0 +1,23 @@
+{
+    "name": "grade-system/backend",
+    "description": "学生成绩管理系统后端",
+    "type": "project",
+    "require": {
+        "php": ">=8.0",
+        "firebase/php-jwt": "^6.10",
+        "phpoffice/phpspreadsheet": "^1.29"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/"
+        }
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "policy": {
+            "advisories": {
+                "ignore-id": ["PKSA-y2cr-5h3j-g3ys"]
+            }
+        }
+    }
+}

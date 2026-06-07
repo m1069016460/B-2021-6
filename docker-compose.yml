@@ -1,0 +1,78 @@
+# version: '3.8'
+
+services:
+  # MySQL 数据库
+  db:
+    image: mysql:8.0
+    container_name: grade_system_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: grade_system
+      MYSQL_USER: grade_user
+      MYSQL_PASSWORD: grade_pass123
+      TZ: Asia/Shanghai
+    ports:
+      - "3307:3307"
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./backend/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot123"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # PHP 后端
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: grade_system_backend
+    restart: always
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: grade_system
+      DB_USERNAME: grade_user
+      DB_PASSWORD: grade_pass123
+      JWT_SECRET: grade_system_jwt_secret_2024
+      APP_DEBUG: "false"
+    ports:
+      - "8000:80"
+    volumes:
+      # - ./backend:/var/www/html
+      - backend_logs:/var/www/html/logs
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Vue3 前端
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: grade_system_frontend
+    restart: always
+    ports:
+      - "3000:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  db_data:
+  backend_logs:
